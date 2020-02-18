@@ -1,0 +1,69 @@
+const path = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+module.exports = function(variable={}, argv) {
+    const config = {
+        mode: argv.mode,
+        devtool: argv.mode === 'development' ? 'cheap-eval-source-map' : false,
+
+        entry: ['./src/loader.js'],
+
+        output: {
+            path: path.join(__dirname, './dist'),
+            filename: 'swiper.js'
+        },
+
+        resolve: {
+            extensions: ['.ts', '.js', '.css', '.scss']
+        },
+
+        module: {
+            rules: [
+                {
+                    test: /\.s?[ac]ss$/,
+                    use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
+                },
+                {
+                    test: /\.ts$/,
+                    use: 'ts-loader',
+                    exclude: /node_modules/
+                },
+                {
+                    test: /\.(png|svg)$/,
+                    use: 'url-loader'
+                }
+            ]
+        },
+
+        plugins: [
+            new MiniCssExtractPlugin({
+                filename: './swiper.css'
+            }),
+
+            new CopyWebpackPlugin([
+                {
+                    from: 'src/samples/*.+(html|json)',
+                    to: 'samples/[name].[ext]',
+                    toType: 'template',
+                },
+                {
+                    from: '../fgpv/*.+(js|css)',
+                    to: 'fgpv'
+                }
+            ])
+        ],
+
+        devServer: {
+            host: '0.0.0.0',
+            https: false,
+            disableHostCheck: true,
+            port: 6001,
+            stats: { colors: true },
+            compress: true,
+            contentBase: '../../contributed-plugins/'
+        }
+    };
+
+    return config;
+};

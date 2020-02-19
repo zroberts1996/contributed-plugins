@@ -2,13 +2,13 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
-const cssFileName = './swiper.css';
-const jsFileName = './swiper.js';
+const cssFileName = './my-first-plugin.css';
+const jsFileName = './my-first-plugin.js';
 
 module.exports = function(variable={}, argv) {
     const config = {
         mode: argv.mode,
-        devtool: argv.mode === 'development' ? 'source-map' : false,
+        devtool: argv.mode === 'development' ? 'cheap-eval-source-map' : false,
 
         entry: ['./src/loader.js'],
 
@@ -18,7 +18,7 @@ module.exports = function(variable={}, argv) {
         },
 
         resolve: {
-            extensions: ['.ts', '.js', '.css', '.scss'],
+            extensions: ['.ts', '.js', '.css', '.scss']
         },
 
         module: {

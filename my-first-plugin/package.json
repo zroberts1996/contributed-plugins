@@ -1,12 +1,12 @@
 {
-    "name": "swiper",
+    "name": "my-first-plugin",
     "version": "0.1.0",
     "description": "",
     "author": "NRCan - CCMEO - FGP",
     "license": "MIT",
-    "homepage": "https://github.com/fgpv-vpgf/contributed-plugins/swiper#readme",
+    "homepage": "https://github.com/fgpv-vpgf/contributed-plugins/my-first-flugin#readme",
     "keywords": [
-        "swiper",
+        "my-first-plugin",
         "plugins",
         "RAMP"
     ],

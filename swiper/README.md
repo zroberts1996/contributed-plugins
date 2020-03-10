@@ -29,14 +29,14 @@ Inside your html, add this to your head section then replace href and src with y
 ```
 
 ## Test page
-To play with the code, from the plugin folder, do npm install, run build then npm run serve. 
-- http://localhost:6001/samples/draw-index.html
+To play with the code, from the plugin folder, do npm install, run build then npm run serve.
+- http://localhost:6001/samples/swiper-index.html
 
 To deploy a test page, do npm run build then npm run deploy. The page will be created at
 - https://"Your GitHub UserName".github.io/contributed-plugins/swiper/samples/swiper-index.html
 
 ## Author and support
-Author and maintainers [NRCan FGP - Johann Levesque](https://github.com/jolevesq)
+Author and maintainer [NRCan FGP - Johann Levesque](https://github.com/jolevesq)
 
 To report issue, please create an issue from the [GitHub repository](https://github.com/fgpv-vpgf/contributed-plugins/issues). Add the plugin-swiper label and any other applicable one.
 

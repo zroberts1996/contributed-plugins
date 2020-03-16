@@ -20,7 +20,7 @@ Inside your configuration file you need
 "plugins": {
       "draw": {
         "open": true
-        "tools": ["picker", "point", "polyline", "polygon", "measure", "extent", "write", "read"]
+        "tools": ["picker", "point", "polyline", "polygon", "edit", "measure", "extent", "write", "read"]
       }
     }
 ```
@@ -32,6 +32,7 @@ Configuration parameters
     - point: add a point on the map
     - polyline: add a line on the map
     - polygon: add a polygon on the map
+    - edit: allow editing existing graphics
     - measure: let you show\hide measures
     - extent: let you delete graphics by extent drawn on the map
     - write: export graphics

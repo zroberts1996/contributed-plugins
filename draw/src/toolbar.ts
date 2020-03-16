@@ -37,9 +37,13 @@ export class DrawToolbar {
     private _mapApi: any;
     private _config: any;
 
-    private _toolbar: any;
+    private _drawToolbar: any;
+    private _editToolbar: any;
+    private _editHandler: any;
     private _bundle: any;
     private _geometryService: any;
+
+    private _drawEndHandler: any;
 
     private _activeTool: string = '';
     private _activeColor: number[] = [255,0,0,1];
@@ -77,7 +81,8 @@ export class DrawToolbar {
 
         // add needed dependencies
         let myBundlePromise = (<any>window).RAMP.GAPI.esriLoadApiClasses([
-            ['esri/toolbars/draw', 'esriTool'],
+            ['esri/toolbars/draw', 'drawToolbar'],
+            ['esri/toolbars/edit', 'editToolbar'],
             ['esri/graphic', 'Graphic'],
             ['esri/symbols/TextSymbol', 'TextSymbol'],
             ['esri/symbols/SimpleMarkerSymbol', 'SimpleMarkerSymbol'],
@@ -168,7 +173,8 @@ export class DrawToolbar {
      */
     initToolbar(myBundle) {
         this._bundle = myBundle;
-        this._toolbar = new this._bundle.esriTool(this._mapApi.esriMap);
+        this._drawToolbar = new this._bundle.drawToolbar(this._mapApi.esriMap);
+        this._editToolbar = new this._bundle.editToolbar(this._mapApi.esriMap);
 
         // set measurement parameters
         this._distanceParams = new this._bundle.DistanceParams();
@@ -185,8 +191,7 @@ export class DrawToolbar {
         (<any>this)._areaParams.calculationType = 'preserveShape';
 
         // define on draw complete event
-        let that = this;
-        this._toolbar.on('draw-complete', evt => { this.addToMap(evt); });
+        this._drawEndHandler = this._drawToolbar.on('draw-complete', (evt: any) => { this.addToMap(evt); });
 
         // define pan and zoom event to redraw text
         this._mapApi.esriMap.on('pan-end', () => { setTimeout(() => this.createBackground(), 0); });
@@ -208,12 +213,29 @@ export class DrawToolbar {
      */
     set activeTool(value: string) {
         // set tooltips, then activate tool for esri tool or deactivate
+        this.disableDetails(true);
         if (['point', 'polyline', 'polygon', 'extent'].indexOf(value) > -1) {
+            if (typeof this._editHandler !== 'undefined') { this._editHandler.remove(); };
+
             this._bundle.i18n.toolbars.draw = this._local[value][this._config.language];
-            this._toolbar.activate(this._bundle.esriTool[value.toUpperCase()]);
-            this.disableDetails(true);
+            this._drawToolbar.activate(this._bundle.drawToolbar[value.toUpperCase()]);
+            this._editToolbar.deactivate();
+        } else if (value === 'edit') {
+            // activate the toolbar when you click on a graphic
+            let that = this;
+            this._editHandler = this._mapApi.esriMap.on('click', (evt: any) => {
+                if (typeof evt.graphic !== 'undefined') {
+                    that._editToolbar.activate(15, evt.graphic);
+                } else {
+                    that._editToolbar.deactivate();
+                }
+            });
+            this._drawToolbar.deactivate();
         } else {
-            this._toolbar.deactivate();
+            if (typeof this._editHandler !== 'undefined') { this._editHandler.remove(); };
+
+            this._drawToolbar.deactivate();
+            this._editToolbar.deactivate();
             this.disableDetails(false);
         }
 
@@ -419,7 +441,7 @@ export class DrawToolbar {
                 break;
             case 'polyline':
                 // remove duplicate vertex
-                evt.geometry.rings[0] = this.removeDuplicate(evt.geometry.rings[0], false);
+                evt.geometry.paths[0] = this.removeDuplicate(evt.geometry.paths[0], false);
 
                 // trigger observable
                 (<any>window).drawObs.subsDrawPolyline(evt.geometry);

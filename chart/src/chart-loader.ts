@@ -159,6 +159,19 @@ export class ChartLoader {
     static parse(config: any, attrs: any, colors: string[] = []): { datasets: any[] } {
         const parsed = { datasets: [] };
 
+        // TODO: work around for CFS do not keep as is for production
+        const parseDate = function(dateString: string): Date {
+            // check date to add month and day if not present. At the same time add dashes if missing
+            if (dateString.length === 4) { dateString = `${dateString}-01-01`; }
+            else if (dateString.length === 5) { dateString = `${dateString.substring(0,4)}-0${dateString.substring(4, 6)}`; }
+            else if (dateString.length === 6 && dateString.indexOf('-') === -1) { dateString = `${dateString.substring(0,4)}-${dateString.substring(4, 6)}`; }
+            else if (dateString.length === 6 && dateString.indexOf('-') !== -1) { dateString = `${dateString.substring(0,5)}0${dateString.substring(5, 6)}`; }
+            else if (dateString.length === 7 && dateString.indexOf('-') === -1) { dateString = `${dateString}-01`; }
+            else if (dateString.length === 8 && dateString.indexOf('-') === -1) { dateString = `${dateString.substring(0,4)}-${dateString.substring(4, 6)}-${dateString.substring(6, 8)}`; }
+    
+            return  new Date(`${dateString}:00:00:00`);
+        }
+
         // loop trough datasets to add from config
         for (let data of config.data) {
             const fieldData = data.measure;
@@ -193,7 +206,9 @@ export class ChartLoader {
                     let parseCombValues = parse.replace(new RegExp(data.regex, 'g'), '*').split('*').filter(Boolean);
                     for (let val of parseCombValues) {
                         let splitVal = val.split(data.split);
-                        item.data.push({ x: new Date(splitVal[0]), y: splitVal[1] });
+
+                        // force time to get the right day
+                        item.data.push({ x: parseDate(splitVal[0]), y: splitVal[1] });
                     }
                 }
 

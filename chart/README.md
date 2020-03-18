@@ -52,7 +52,7 @@ Configuration parameters
 - type: chart type to create (pie, bar or line)
 - title: chart title
 - labelsLine: object to handle how labels for line graphics will be generate (xAxis and yAxis). Only for bar and line chart.
-  - type: type of labels, field to get them from data or linear to interpolate them from data
+  - type: type of labels, field to get them from data or linear to interpolate them from data (time in yyyy-mm-dd format)
   - title: title of the axis
   - values: name field to get the labels (only for type field)
   - split: character to use to split the labels (only for type field)

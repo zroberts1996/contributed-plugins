@@ -2,14 +2,20 @@ import { ChartPie } from './chart-pie';
 import { ChartBar } from './chart-bar';
 
 import * as chartjs from 'chart.js';
+import * as nouislider from 'nouislider';
 
 /**
  * Creates and manages charts.
  */
 export class ChartLoader {
     private _chart: chartjs;
+    private _config: any;
     private _mapApi: any;
     private _panel: any;
+    private _slider: any;
+
+    private _barChartOptions: ChartBar;
+    private _pieChartOptions: ChartPie;
 
     static defaultColors: string[] = [
         '#e6194b',
@@ -41,32 +47,132 @@ export class ChartLoader {
      * @constructor
      * @param {Any} mapApi the viewer api
      * @param {Any} config the slider configuration
-     * @param {Object} attrs the feature attributes
      */
-    constructor(mapApi: any, config: any, attrs: object) {
+    constructor(mapApi: any, config: any) {
         this._mapApi = mapApi;
-        this._panel = this._mapApi.panels.getById('chart')
+        this._config = config;
+        this._panel = this._mapApi.panels.getById('chart');
+    }
 
-        let chartOptions;
-        if (config.type === 'pie') {
-            chartOptions = new ChartPie(config, attrs);
-        } else if (config.type === 'bar' || config.type === 'line') {
-            chartOptions = new ChartBar(config, attrs);
-        }
-        this.draw(chartOptions);
+    /**
+     * Initialize the slider
+     * @function initSlider
+     * @param {Number} min minimum value for slider
+     * @param {Number} max maximum value for slider
+     * @param {String} xType the x axis type, date or linear
+     */
+    initSlider(min: number, max: number, xType: string) {
+        const delta = Math.abs(max - min);
+        nouislider.create(this._slider,
+            {
+                start: [min, max],
+                connect: true,
+                behaviour: 'drag-tap',
+                tooltips: [{ to: (value: number) => value, from: Number },
+                        { to: (value: number) => value, from: Number }],
+                range: { min, max },
+                step: 1,
+                pips: {
+                    mode: 'steps',
+                    //values: (delta % 2) ? [0, 20, 40, 60, 80, 100] : [0, 20, 50, 75, 100],
+                    density: Math.floor(delta / 4) * 25,
+                    stepped: true
+                }
+            });
 
-        // subscribe to panel closing to destroy existing graph
-        this._panel.closing.subscribe(() => {
-            this.destroy();
+        // trap the on change event when user use handles
+        let that = this;
+        this._slider.noUiSlider.on('set.one', function(values: string[]) {;
+            // set min and max from the slider values
+            let min: any = parseInt(values[0], 10);
+            let max: any = parseInt(values[1], 10);
+
+            if ((<any>that).xType === 'date') {
+                min = new Date(`${min}-01-01:00:00:00`);
+                max = new Date(`${max}-12-31:00:00:00`);
+            }
+
+            // loop trought datasets to filter the data 
+            for (let [i, dataset] of that._chart.data.datasets.entries()) {
+                dataset.data = that.parseRange(min, max, that._barChartOptions.datasets[i]);
+            }
+
+            // update the chart
+            that._chart.update();
         });
+    }
+
+    /**
+     * Parse the graph value with the range from the slider
+     * @function parseRange
+     * @param {Date} min minimum value to filter
+     * @param {Date} max maximum value to filter
+     * @param {Any} data data to filter
+     */
+    parseRange(min: Date, max: Date, data: any): object[] {
+        const parsed = [];
+
+        for (let value of data) {
+            if (value.x >= min && value.x <= max) { parsed.push(value); }
+        }
+
+        return parsed;
+    }
+
+    /**
+     * Destroy the slider
+     * @function destroySlider
+     */
+    destroySlider() {
+        if (this._slider.noUiSlider) { this._slider.noUiSlider.destroy(); }
+    }
+
+    /**
+     * Destroy the chart
+     * @function destroyChart
+     */
+    destroyChart() {
+        if (this._chart) { this._chart.destroy(); }
+    }
+
+    /**
+     * Create pie chart
+     * @function createPieChart
+     * @param {Object} attrs attributes to use for the graph
+     */
+    createPieChart(attrs: object) {
+        this._pieChartOptions = new ChartPie(this._config, attrs);
+        this.draw(this._pieChartOptions);
+    }
+
+    /**
+     * Create bar chart
+     * @function createBarChart
+     * @param {Object} attrs attributes to use for the graph
+     */
+    createBarChart(attrs: object) {
+        this._barChartOptions = new ChartBar(this._config, attrs);
+        this.draw(this._barChartOptions);
+
+        // if it is a line chart, we assume they use date as x values so we add a date slider
+        if (this._config.type === 'line' && (this._config.axis.xAxis.type === 'date' || this._config.axis.xAxis.type === 'linear')) {
+            this._slider = document.getElementById('nouislider');
+            const range = this._barChartOptions.range;
+
+            if (this._config.axis.xAxis.type === 'date') {
+                range.min = range.min.getFullYear();
+                range.max = range.max.getFullYear()
+            }
+            this.initSlider(range.min, range.max, this._config.axis.xAxis.type);
+        }
     }
 
     /**
      * Draw the chart
      * @function draw
-     * @param {ChartOptions} opts the chart options
+     * @param {Any} opts the chart options
      */
-    draw(opts: chartOptions): void {
+    draw(opts: any): void {
         // extend chart options with global ones
         const extendOptions = { ...opts.options, ...this.getGlobalOptions(opts.title) };
 
@@ -141,22 +247,15 @@ export class ChartLoader {
     }
 
     /**
-     * Destroy the chart
-     * @function destroy
-     */
-    destroy() {
-        if (this._chart) { this._chart.destroy(); }
-    }
-
-    /**
      * Parse feature datasets
      * @function parse
      * @param {Any} config the configuration
      * @param {Any} attrs the feature attributes
      * @param {String[]} colors the array of colors to use
+     * @param {String} xType the x axis type, date or linear
      * @return {Object} the parse datasets
      */
-    static parse(config: any, attrs: any, colors: string[] = []): { datasets: any[] } {
+    static parse(config: any, attrs: any, colors: string[] = [], xType?: string): { datasets: any[] } {
         const parsed = { datasets: [] };
 
         // TODO: work around for CFS do not keep as is for production
@@ -168,7 +267,7 @@ export class ChartLoader {
             else if (dateString.length === 6 && dateString.indexOf('-') !== -1) { dateString = `${dateString.substring(0,5)}0${dateString.substring(5, 6)}`; }
             else if (dateString.length === 7 && dateString.indexOf('-') === -1) { dateString = `${dateString}-01`; }
             else if (dateString.length === 8 && dateString.indexOf('-') === -1) { dateString = `${dateString.substring(0,4)}-${dateString.substring(4, 6)}-${dateString.substring(6, 8)}`; }
-    
+
             return  new Date(`${dateString}:00:00:00`);
         }
 
@@ -207,8 +306,9 @@ export class ChartLoader {
                     for (let val of parseCombValues) {
                         let splitVal = val.split(data.split);
 
-                        // force time to get the right day
-                        item.data.push({ x: parseDate(splitVal[0]), y: splitVal[1] });
+                        // force time to get the right day or use number
+                        let valueParsed = (xType === 'linear') ? splitVal[0] : parseDate(splitVal[0]);
+                        item.data.push({ x: valueParsed, y: splitVal[1] });
                     }
                 }
 
@@ -244,13 +344,6 @@ export class ChartLoader {
 
         return labels;
     }
-}
-
-interface chartOptions {
-    title: string;
-    type: string;
-    data: object;
-    options: object;
 }
 
 export interface ChartLoader {

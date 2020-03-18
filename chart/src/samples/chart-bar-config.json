@@ -94,7 +94,7 @@
           "name": "Graphics",
           "layerType": "esriFeature",
           "fileType": "geojson",
-          "url": "https://raw.githubusercontent.com/jolevesq/plugins/chart/chartLayer/samples/config/geoJSON/barChart.json"
+          "url": "https://raw.githubusercontent.com/fgpv-vpgf/contributed-plugins/master/chart/src/samples/geoJSON/barChart.json"
         }
       ],
       "extentSets": [
@@ -252,7 +252,7 @@
       "chart": {
         "type": "bar",
         "title": "My Custom Tilte",
-        "labelsLine": {
+        "axis": {
           "xAxis": {
             "type": "field",
             "title": "My categories",

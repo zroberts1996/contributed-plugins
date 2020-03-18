@@ -94,7 +94,7 @@
           "name": "Graphics",
           "layerType": "esriFeature",
           "fileType": "geojson",
-          "url": "https://raw.githubusercontent.com/jolevesq/plugins/chart/chartLayer/samples/config/geoJSON/doughnutChart.json"
+          "url": "https://raw.githubusercontent.com/fgpv-vpgf/contributed-plugins/master/chart/src/samples/geoJSON/doughnutChart.json"
         }
       ],
       "extentSets": [

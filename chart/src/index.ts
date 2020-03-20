@@ -9,6 +9,7 @@ import { ChartLoader } from './chart-loader';
 export default class Chart {
     private _mapApi: any;
     private _panel: any;
+    private _loader: ChartLoader;
     private _panelOptions: object = {
         'margin-top': '60px',
         'margin-bottom': '60px',
@@ -34,11 +35,24 @@ export default class Chart {
         this.config = this._RV.getConfig('plugins').chart;
         this.config.language = this._RV.getCurrentLang();
 
+        // create chart loader class
+        this._loader = new ChartLoader(this._mapApi, this.config);
+
+        // subscribe to panel closing to destroy existing graph and slider
+        this._panel.closing.subscribe(() => {
+            this._loader.destroyChart();
+            if (this.config.type === 'line') { this._loader.destroySlider(); }
+        });
+
         // subscribe to click event when user click on data to trigger chart creation
         this._mapApi.click.subscribe(pt => {
             this._panel.close();
             pt.features.subscribe(feat => {
-                new ChartLoader(this._mapApi, this.config, feat);
+                if (this.config.type === 'pie') {
+                    this._loader.createPieChart(feat);
+                } else if (this.config.type === 'bar' || this.config.type === 'line') {
+                    this._loader.createBarChart(feat);
+                }
             })
         });
     }

@@ -93,7 +93,8 @@
           "id": "0",
           "name": "Graphics",
           "layerType": "esriFeature",
-          "url": "https://webservices.maps.canada.ca/arcgis/rest/services/Test_FGP/test_data/MapServer/0"
+          "fileType": "geojson",
+          "url": "https://raw.githubusercontent.com/fgpv-vpgf/contributed-plugins/master/chart/src/samples/geoJSON/lineChartMultiNumber.json"
         }
       ],
       "extentSets": [
@@ -251,10 +252,10 @@
       "chart": {
         "type": "line",
         "title": "my chart",
-        "labelsLine": {
+        "axis": {
           "xAxis": {
-            "type": "time",
-            "title": "Dates",
+            "type": "linear",
+            "title": "My numbers",
             "values": "",
             "split": ""
           },
@@ -273,22 +274,10 @@
             "id": "0",
             "data": [{
               "type": "combine",
-              "measure": "Measure 2 (Data)",
+              "measure": "data1",
               "label": {
-                "type": "field",
-                "values": "Measure 2 (Name)",
-                "split": ""
-              },
-              "regex": "\\(|\\),\\(|\\)",
-              "split": ",",
-              "prefix": "",
-              "suffix": "mBq / m3"
-            }, {
-              "type": "combine",
-              "measure": "Measure 3 (Data)",
-              "label": {
-                "type": "field",
-                "values": "Measure 3 (Name)",
+                "type": "value",
+                "values": "data1",
                 "split": ""
               },
               "regex": "\\(|\\),\\(|\\)",

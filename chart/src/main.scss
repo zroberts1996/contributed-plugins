@@ -1,3 +1,62 @@
+@import '../node_modules/nouislider/distribute/nouislider.css';
+
+// overwrite nouislider class
+.noUi-marker-horizontal.noUi-marker-large {
+    height: 10px;;
+}
+
+.noUi-horizontal {
+    height: 10px;
+}
+
+.noUi-horizontal .noUi-handle {
+    height: 20px;
+    width: 26px;
+}
+
+.noUi-handle:before {
+    height: 10px;
+    top: 4px;
+    left: 10px;
+}
+
+.noUi-handle:after {
+    height: 10px;
+    top: 4px;
+    left: 12px;
+}
+
+.noUi-handle {
+    &:focus {
+        .noUi-tooltip {
+            display: block;
+        }
+    }
+}
+
+.noUi-tooltip {
+    padding: 1px 4px;
+    display: none;
+}
+
+.noUi-horizontal .noUi-tooltip {
+    top: 20px;
+    bottom: initial;
+}
+
+input:focus + .noUi-tooltip { display: block; }
+
+// chart panel
+.rv-chart-panel {
+    padding: 0px 10px 70px 10px;
+    height: 100%;
+    overflow: hidden;
+}
+
 .rv-chart {
-    margin: 10px;
+    height: 100% !important;
+}
+
+.rv-chart-slider{
+    margin: 15px; 
 }

@@ -527,6 +527,7 @@
     "language": "en-CA",
     "plugins": {
         "rangeSlider": {
+            "open": true,
             "enable": false,
             "controls": [
                 "lock",

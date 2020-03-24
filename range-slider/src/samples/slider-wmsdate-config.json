@@ -295,6 +295,7 @@
     },
     "plugins": {
       "rangeSlider": {
+        "open": true,
         "controls": ["lock", "loop", "delay", "refresh", "export"],
         "params": {
           "delay": 3000,

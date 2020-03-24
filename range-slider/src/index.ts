@@ -14,6 +14,8 @@ import { SliderBar } from './slider-bar';
 import { take } from 'rxjs/internal/operators/take';
 
 export default class RangeSlider {
+    private _button: any;
+
     /**
     * Plugin init
     * @function init
@@ -32,9 +34,32 @@ export default class RangeSlider {
         this.extendConfig = {...RangeSlider.prototype.layerOptions, ...this.config.params};
         this.extendConfig.language = this._RV.getCurrentLang();
 
+        // side menu button
+        this._button = this.mapApi.mapI.addPluginButton(
+            RangeSlider.prototype.translations[this._RV.getCurrentLang()].title, this.onMenuItemClick()
+        );
+        if (this.config.open) { this._button.isActive = true; }
+
+
         // get array of id(s) and set layer(s)
         const ids = this.config.layers.map(layer => layer.id);
         this.mapApi.layersObj.layerAdded.subscribe((layer: any) => this.setLayer(layer, this.config.layers, ids));
+    }
+
+    /**
+    * Event to fire on side menu item click. Open/Close the panel
+    * @function onMenuItemClick
+    * @return {function} the function to run
+    */
+   onMenuItemClick() {
+        return () => {
+            this._button.isActive = !this._button.isActive;
+            if (this._button.isActive) {
+                this.panel.open();
+            } else {
+                this.panel.close();
+            }
+        };
     }
 
     /**
@@ -162,6 +187,7 @@ RangeSlider.prototype.layerOptions = {
 
 RangeSlider.prototype.translations = {
     'en-CA': {
+        title: 'Range Slider',
         bar: {
             lock: 'Lock left anchor',
             unlock: 'Unlock left anchor',
@@ -181,6 +207,7 @@ RangeSlider.prototype.translations = {
     },
 
     'fr-CA': {
+        title: 'Curseur de plage',
         bar: {
             lock: 'Verrouiller la molette gauche',
             unlock: 'Déverrouiller la molette gauche',

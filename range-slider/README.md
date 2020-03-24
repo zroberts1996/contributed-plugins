@@ -8,6 +8,7 @@ Inside your configuration file you need
 ```
 "plugins": {
     "rangeSlider": {
+        "open": true,
         "controls": ["lock", "loop", "delay", "export", "refresh"],
         "params": {
           "delay": 3000,
@@ -24,6 +25,7 @@ Inside your configuration file you need
 ```
 
 Configuration parameters
+- open: boolean to set the controls panel (description and slider) open by default
 - controls: string array who contains needed controls. Order inside the array has no effect.
     - lock: lock or unlock left anchor when step or play
     - loop: loop the animation

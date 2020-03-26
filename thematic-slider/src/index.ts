@@ -1,4 +1,3 @@
-
 import { SliderPanel } from './slider-panel';
 
 export default class ThematicSlider {
@@ -23,7 +22,10 @@ export default class ThematicSlider {
         );
 
         // create the panel and check if the button is active by default
-        if (this.config.open) { this._button.isActive = true; }
+        if (this.config.open) {
+            this._button.isActive = true;
+            this.setButtonState(true);
+        }
         this._panel = new SliderPanel(this.mapApi, this.config);
     }
 
@@ -37,10 +39,24 @@ export default class ThematicSlider {
             this._button.isActive = !this._button.isActive;
             if (this._button.isActive) {
                 this._panel.open();
+                this.setButtonState(true);
             } else {
                 this._panel.close();
+                this.setButtonState(false);
             }
         };
+    }
+
+    /**
+    * Disable main app bar buttons except sidenav when thematic slider is open to avoid collision
+    * @function setButtonState
+    * @param {Boolean} disable disable or not the buttons
+    */
+    setButtonState(disable: boolean) {
+        const buttons = $('.main-appbar button:not([rv-help="sidenav-button"])');
+        buttons.each((index: number, button: any) => {
+            button.disabled = disable;
+        });
     }
 }
 

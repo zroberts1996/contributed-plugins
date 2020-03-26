@@ -213,7 +213,7 @@ export class SliderPanel {
         // if not the last, call this function again in ... seconds from configuration 
         if (!last) {
             that._playTimeout = setInterval(that.setPlayInterval, (<any>that).active.duration, that);
-        } else { that.setPlayState(false); }
+        } else { that.play(false); }
     }
 }
 

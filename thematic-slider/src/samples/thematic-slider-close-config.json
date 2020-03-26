@@ -268,9 +268,9 @@
     },
     "plugins": {
       "thematicSlider": {
-        "open": true,
+        "open": false,
         "autorun": false,
-        "loop": true,
+        "loop": false,
         "description": true,
         "slider": true,
         "stack": false,

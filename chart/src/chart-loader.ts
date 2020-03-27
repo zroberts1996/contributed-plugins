@@ -13,6 +13,7 @@ export class ChartLoader {
     private _mapApi: any;
     private _panel: any;
     private _slider: any;
+    private _xType: string;
 
     private _barChartOptions: ChartBar;
     private _pieChartOptions: ChartPie;
@@ -81,13 +82,14 @@ export class ChartLoader {
             });
 
         // trap the on change event when user use handles
+        this._xType = xType;
         let that = this;
         this._slider.noUiSlider.on('set.one', function(values: string[]) {;
             // set min and max from the slider values
             let min: any = parseInt(values[0], 10);
             let max: any = parseInt(values[1], 10);
 
-            if ((<any>that).xType === 'date') {
+            if ((<any>that)._xType === 'date') {
                 min = new Date(`${min}-01-01:00:00:00`);
                 max = new Date(`${max}-12-31:00:00:00`);
             }

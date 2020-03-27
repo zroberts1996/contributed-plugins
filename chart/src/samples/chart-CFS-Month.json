@@ -403,7 +403,7 @@
             "axis": {
                 "xAxis": {
                     "title": "Date",
-                    "type": "time",
+                    "type": "date",
                     "values": "-",
                     "split": ";"
                 },

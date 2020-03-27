@@ -85,10 +85,10 @@ export class ChartBar {
                 let minVal = _.min(dataset.data.map((rec) => {return rec.x}));
                 let maxVal = _.max(dataset.data.map((rec) => {return rec.x}))
                 if (this._range.min === -1 || this._range.min >= minVal) {
-                    this._range.min = parseInt(minVal, 10);
+                    this._range.min = (typeof minVal === 'string') ? parseInt(minVal, 10) : minVal;
                 }
                 if (this._range.max === -1 || this._range.max >= maxVal) {
-                    this._range.max = parseInt(maxVal, 10);
+                    this._range.max = (typeof maxVal === 'string') ? parseInt(maxVal, 10) : maxVal;
                 }
             }
         }

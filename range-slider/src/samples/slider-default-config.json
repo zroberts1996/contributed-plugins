@@ -272,11 +272,10 @@
     },
     "plugins": {
       "rangeSlider": {
-        "open": false,
+        "open": true,
         "controls": ["lock", "delay", "refresh"],
         "params": {
           "delay": 3000,
-          "range": { "min": 1400, "max": 1900 },
           "type": "number"
         },
         "layers": [{

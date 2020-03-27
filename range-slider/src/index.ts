@@ -40,7 +40,6 @@ export default class RangeSlider {
         );
         if (this.config.open) { this._button.isActive = true; }
 
-
         // get array of id(s) and set layer(s)
         const ids = this.config.layers.map(layer => layer.id);
         this.mapApi.layersObj.layerAdded.subscribe((layer: any) => this.setLayer(layer, this.config.layers, ids));
@@ -121,7 +120,7 @@ export default class RangeSlider {
 
         // set bar controls then open the panel
         this.setBarControls(this.config.controls);
-        this.panel.open();
+        if (this.config.open) { this.panel.open(); }
     }
 
     /**

@@ -88,7 +88,6 @@ export default class RangeSlider {
                 // make sure all attributes are added before creating the slider
                 this.mapApi.layers.attributesAdded.pipe(take(1)).subscribe(attrs => {
                     if (attrs.attributes.length > 0) {
-                        console.log(attrs.attributes)
                         // get attributes value for specified field
                         const values = [];
                         for (let row of attrs.attributes) {
@@ -98,7 +97,6 @@ export default class RangeSlider {
                         const limits: Range = { min: Math.min.apply(null, values), max: Math.max.apply(null, values) };
                         if (this.extendConfig.limit.min === null) { this.extendConfig.limit = limits; }
                         if (this.extendConfig.range.min === null) { this.extendConfig.range = limits; }
-                        console.log(limits)
                     }
 
                     this.setSliderBar();

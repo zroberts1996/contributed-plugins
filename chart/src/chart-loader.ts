@@ -1,5 +1,10 @@
 import { ChartPie } from './chart-pie';
 import { ChartBar } from './chart-bar';
+import { ChartLine } from './chart-line';
+
+import {
+    CANVAS_TEMPLATE
+} from './template';
 
 import * as chartjs from 'chart.js';
 import * as nouislider from 'nouislider';
@@ -12,9 +17,14 @@ export class ChartLoader {
     private _config: any;
     private _mapApi: any;
     private _panel: any;
-    private _slider: any;
+    private _sliderX: any;
+    private _sliderY: any;
     private _xType: string;
+    private _yType: string;
+    private _xRange: any = { min: -1, max: -1 };
+    private _yRange: any = { min: -1, max: -1 };
 
+    private _lineChartOptions: ChartLine;
     private _barChartOptions: ChartBar;
     private _pieChartOptions: ChartPie;
 
@@ -58,20 +68,23 @@ export class ChartLoader {
     /**
      * Initialize the slider
      * @function initSlider
+     * @param {Any} slider slider div
      * @param {Number} min minimum value for slider
      * @param {Number} max maximum value for slider
      * @param {String} xType the x axis type, date or linear
      */
-    initSlider(min: number, max: number, xType: string) {
+    initSlider(slider: any, min: number, max: number, type: string) {
         const delta = Math.abs(max - min);
-        nouislider.create(this._slider,
+        nouislider.create(slider,
             {
                 start: [min, max],
                 connect: true,
                 behaviour: 'drag-tap',
-                tooltips: [{ to: (value: number) => value, from: Number },
-                        { to: (value: number) => value, from: Number }],
+                tooltips: [{ to: (value: number) => value.toFixed(2), from: Number },
+                        { to: (value: number) => value.toFixed(2), from: Number }],
                 range: { min, max },
+                orientation: (slider.id.slice(-1) === 'X') ? 'horizontal' : 'vertical',
+                direction: (slider.id.slice(-1) === 'X') ? 'ltr' : 'rtl',
                 step: 1,
                 pips: {
                     mode: 'steps',
@@ -81,41 +94,69 @@ export class ChartLoader {
                 }
             });
 
+        // parse the pips labels
+        this.parsePips(slider.id.slice(-1), type, min, max);
+
         // trap the on change event when user use handles
-        this._xType = xType;
         let that = this;
-        this._slider.noUiSlider.on('set.one', function(values: string[]) {;
+        slider.noUiSlider.on('set.one', function(values: string[]) {;
             // set min and max from the slider values
-            let min: any = parseInt(values[0], 10);
-            let max: any = parseInt(values[1], 10);
+            let min: any = parseFloat(values[0]);
+            let max: any = parseFloat(values[1]);
 
-            if ((<any>that)._xType === 'date') {
-                min = new Date(`${min}-01-01:00:00:00`);
-                max = new Date(`${max}-12-31:00:00:00`);
-            }
+            const axis = (this.options.orientation === 'horizontal') ? 'x' : 'y';
+            const type = (axis === 'x') ? (<any>that)._xType : (<any>that)._yType;
 
-            // loop trought datasets to filter the data 
+            // parse the pips labels
+            that.parsePips(axis, type, min, max);
+
+            // loop trought datasets to filter the data
             for (let [i, dataset] of that._chart.data.datasets.entries()) {
-                dataset.data = that.parseRange(min, max, that._barChartOptions.datasets[i]);
+                dataset.data = that.parseRange((<any>that)._xRange, (<any>that)._yRange, that._lineChartOptions.datasets[i]);
             }
 
             // update the chart
             that._chart.update();
         });
+
+        // add handles to focus cycle
+        $('.noUi-handle-lower').attr('tabindex', '-2');
+        $('.noUi-handle-upper').attr('tabindex', '-2');
+    }
+
+    /**
+     * Parse the graph pips labels value
+     * @function parsePips
+     * @param {String} axis axis to parse labels for (x or y)
+     * @param {Date} type the type of axis (linear or date)
+     * @param {Any} min min range to parse the value
+     * @param {Any} max max range to parse the value
+     */
+    parsePips(axis: string, type: string, min: any, max: any) {
+        let range = (axis.toLowerCase() === 'x') ? this._xRange : this._yRange;
+        if (axis.toLowerCase() === 'x') {
+            this._xType = type;
+        } else {
+            this._yType = type;
+        }
+        range.min = (type === 'date') ? new Date(`${min}-01-01:00:00:00`) : min;
+        range.max = (type === 'date') ? new Date(`${max}-12-31:00:00:00`) : max;
     }
 
     /**
      * Parse the graph value with the range from the slider
      * @function parseRange
-     * @param {Date} min minimum value to filter
-     * @param {Date} max maximum value to filter
+     * @param {Any} xRange x range values to filter
+     * @param {Any} yRange y range values to filter
      * @param {Any} data data to filter
      */
-    parseRange(min: Date, max: Date, data: any): object[] {
+    parseRange(xRange: any, yRange: any, data: any): object[] {
         const parsed = [];
 
         for (let value of data) {
-            if (value.x >= min && value.x <= max) { parsed.push(value); }
+            let x = (typeof value.x === 'string') ? parseFloat(value.x) : value.x;
+            let y = (typeof value.y === 'string') ? parseFloat(value.y) : value.y;
+            if (x >= xRange.min && x <= xRange.max && y >= yRange.min && y <= yRange.max) { parsed.push(value); }
         }
 
         return parsed;
@@ -126,7 +167,8 @@ export class ChartLoader {
      * @function destroySlider
      */
     destroySlider() {
-        if (this._slider.noUiSlider) { this._slider.noUiSlider.destroy(); }
+        if (typeof this._sliderX !== 'undefined' && this._sliderX.noUiSlider) { this._sliderX.noUiSlider.destroy(); }
+        if (typeof this._sliderY !== 'undefined' && this._sliderY.noUiSlider) { this._sliderY.noUiSlider.destroy(); }
     }
 
     /**
@@ -137,7 +179,7 @@ export class ChartLoader {
         // we need to also remove the canvas because if not, data is still on canvas
         if (this._chart) {
             this._panel.body.find('#rvChart').remove();
-            this._panel.body.find('.rv-chart-panel').append('<canvas id="rvChart" class="rv-chart"></canvas>');
+            this._panel.body.find('.rv-chart-canvas').prepend(CANVAS_TEMPLATE);
             this._chart.destroy();
         }
     }
@@ -160,17 +202,31 @@ export class ChartLoader {
     createBarChart(attrs: object) {
         this._barChartOptions = new ChartBar(this._config, attrs);
         this.draw(this._barChartOptions);
+    }
+
+    /**
+     * Create line chart
+     * @function createLineChart
+     * @param {Object} attrs attributes to use for the graph
+     */
+    createLineChart(attrs: object) {
+        this._lineChartOptions = new ChartLine(this._config, attrs);
+        this.draw(this._lineChartOptions);
 
         // if it is a line chart, we assume they use date as x values so we add a date slider
         if (this._config.type === 'line' && (this._config.axis.xAxis.type === 'date' || this._config.axis.xAxis.type === 'linear')) {
-            this._slider = document.getElementById('nouislider');
-            const range = this._barChartOptions.range;
+            this._sliderX = document.getElementById('nouisliderX');
+            const rangeX = this._lineChartOptions.rangeX;
 
             if (this._config.axis.xAxis.type === 'date') {
-                range.min = range.min.getFullYear();
-                range.max = range.max.getFullYear()
+                rangeX.min = rangeX.min.getFullYear();
+                rangeX.max = rangeX.max.getFullYear()
             }
-            this.initSlider(range.min, range.max, this._config.axis.xAxis.type);
+            this.initSlider(this._sliderX, rangeX.min, rangeX.max, this._config.axis.xAxis.type);
+
+            this._sliderY = document.getElementById('nouisliderY');
+            const rangeY = this._lineChartOptions.rangeY;
+            this.initSlider(this._sliderY, rangeY.min, rangeY.max, this._config.axis.yAxis.type);
         }
     }
 
@@ -181,7 +237,7 @@ export class ChartLoader {
      */
     draw(opts: any): void {
         // extend chart options with global ones
-        const extendOptions = { ...opts.options, ...this.getGlobalOptions(opts.title) };
+        const extendOptions = { ...opts.options, ...this.getGlobalOptions() };
 
         this._panel.open();
         this._chart = new chartjs('rvChart', { type: opts.type, data: opts.data, options: extendOptions });
@@ -190,10 +246,9 @@ export class ChartLoader {
     /**
      * Get global options fot all charts
      * @function getGlobalOptions
-     * @param {String} title the chart title
      * @return {Object} the global options
      */
-    getGlobalOptions(title: string): object {
+    getGlobalOptions(): object {
         return {
             maintainAspectRatio: false,
             responsive: true,
@@ -204,8 +259,7 @@ export class ChartLoader {
                 animateScale: true
             },
             title: {
-                display: true,
-                text: title
+                display: false
             },
             showLines: true,
             elements: {

@@ -1,19 +1,5 @@
-import {
-    SLIDER_TEMPLATE,
-    LOCK_BAR_TEMPLATE,
-    LOOP_BAR_TEMPLATE,
-    PLAY_BAR_TEMPLATE,
-    REFRESH_BAR_TEMPLATE,
-    DELAY_BAR_TEMPLATE,
-    EXPORT_BAR_TEMPLATE
-} from './template';
-
-import { SliderControls } from './slider-controls';
-import { SliderBar } from './slider-bar';
-
-import { take } from 'rxjs/internal/operators/take';
-
-const _ = require('lodash');
+import { SLIDER_TEMPLATE } from './template';
+import { SliderManager } from './slider-manager';
 
 export default class RangeSlider {
     private _button: any;
@@ -31,27 +17,22 @@ export default class RangeSlider {
         this.panel.element.css(RangeSlider.prototype.panelOptions);
         this.panel.body = SLIDER_TEMPLATE;
 
-        // get slider configuration then add/merge configuration for range, limit and delay
-        this.config = this._RV.getConfig('plugins').rangeSlider; 
-        this.extendConfig = {...RangeSlider.prototype.layerOptions, ...this.config.params};
-        this.extendConfig.language = this._RV.getCurrentLang();
+        // get slider configuration then add/merge needed configuration
+        const config = this._RV.getConfig('plugins').rangeSlider; 
+        const extendConfig = { ...RangeSlider.prototype.layerOptions, ...config.params };
+        extendConfig.controls = config.controls;
+        extendConfig.layers = config.layers;
+        extendConfig.open = config.open;
+        extendConfig.language = this._RV.getCurrentLang();
 
         // side menu button
         this._button = this.mapApi.mapI.addPluginButton(
             RangeSlider.prototype.translations[this._RV.getCurrentLang()].title, this.onMenuItemClick()
         );
-        if (this.config.open) { this._button.isActive = true; }
+        if (config.open) { this._button.isActive = true; }
 
-        // get array of id(s) and set layer(s)
-        const ids = this.config.layers.map(layer => layer.id);
-        this.mapApi.layersObj.layerAdded.subscribe((layer: any) => {
-            // if it is the right layer, get the attributes
-            if (ids.indexOf(layer.id) !== -1) {
-                // clone deep the layer object and use a timeout. If not, sometimes getAttributes return empty array
-                // this only happend when there is more layer on the map then set for the slider
-                setTimeout(() => { this.setLayer(_.cloneDeep(layer), this.config.layers); }, 1000);
-            }
-        });
+        // start slider creation
+        new SliderManager(mapApi, this.panel, extendConfig);
     }
 
     /**
@@ -62,96 +43,9 @@ export default class RangeSlider {
    onMenuItemClick() {
         return () => {
             this._button.isActive = !this._button.isActive;
-            if (this._button.isActive) {
-                this.panel.open();
-            } else {
-                this.panel.close();
-            }
+            this._button.isActive ? this.panel.open() : this.panel.close();
         };
     }
-
-    /**
-     * Set layer properties for added layer
-     * @function setLayer
-     * @param {Any} mapApi the viewer api
-     * @param {Any} config the slider configuration
-     */
-    setLayer(layer: any, config: any): void {
-        const layerInfo = config.find(i => i.id === layer.id);
-        this.extendConfig.layers.push(layerInfo);
-        this.extendConfig.nbLayers += 1;
-        // if layer is ESRI, get all attributes to define the limit
-        const layerType = layer.type;
-        if ((layerType === 'esriDynamic' || layerType === 'esriFeature') && this.extendConfig.nbLayers === this.config.layers.length) {
-            const attrs = layer.getAttributes();
-            if (attrs.length === 0) {
-                // make sure all attributes are added before creating the slider
-                this.mapApi.layers.attributesAdded.pipe(take(1)).subscribe(attrs => {
-                    if (attrs.attributes.length > 0) {
-                        // get attributes value for specified field
-                        const values = [];
-                        for (let row of attrs.attributes) {
-                            values.push(row[layerInfo.field]);
-                        }
-                        // set limit and range if not set from configuration
-                        const limits: Range = { min: Math.min.apply(null, values), max: Math.max.apply(null, values) };
-                        if (this.extendConfig.limit.min === null) { this.extendConfig.limit = limits; }
-                        if (this.extendConfig.range.min === null) { this.extendConfig.range = limits; }
-                    }
-
-                    this.setSliderBar();
-                });
-            }
-        } else if (layerType === 'ogcWms' && this.extendConfig.nbLayers === this.config.layers.length) {
-            // everything must be set inside configuration (range and limit)
-            this.setSliderBar();
-        }
-    }
-
-    /**
-     * Set slider bar
-     * @function setSliderBar
-     */
-    setSliderBar(): void {
-        // set step
-        this.extendConfig.step = (this.extendConfig.range.max - this.extendConfig.range.min);
-
-        // initialiaze slider bar
-        this.slider = new SliderBar(this.mapApi, this.extendConfig);
-
-        // set bar controls then open the panel
-        this.setBarControls(this.config.controls);
-        if (this.config.open) { this.panel.open(); }
-    }
-
-    /**
-     * Set slider bar controls
-     * @function setBarControls
-     * @param {String[]} the array of controls to initialize
-     */
-    setBarControls(controls: string[]): void {
-        // set templates to initialize
-        const templates = [
-            PLAY_BAR_TEMPLATE
-        ];
-
-        // add controls from configuration
-        for (let ctrl of controls) {
-            if (ctrl === 'lock') { templates.unshift(LOCK_BAR_TEMPLATE); }
-            else if (ctrl === 'loop') { templates.push(LOOP_BAR_TEMPLATE); }
-            else if (ctrl === 'refresh') { templates.push(REFRESH_BAR_TEMPLATE); }
-            else if (ctrl === 'delay') { templates.push(DELAY_BAR_TEMPLATE); }
-            else if (ctrl === 'export') { templates.push(EXPORT_BAR_TEMPLATE); }
-        }
-
-        // create slider bar controls
-        this.panel.controls = new SliderControls(this.mapApi, this.panel, templates, this.slider);
-    }
-}
-
-export interface Range {
-    min: number,
-    max: number
 }
 
 export default interface RangeSlider {
@@ -159,11 +53,13 @@ export default interface RangeSlider {
     _RV: any,
     translations: any,
     panel: any,
-    config: any,
-    extendConfig: any,
     panelOptions: any,
-    layerOptions: any,
-    slider: any
+    layerOptions: any
+}
+
+export interface Range {
+    min: number,
+    max: number
 }
 
 RangeSlider.prototype.panelOptions = {
@@ -174,6 +70,7 @@ RangeSlider.prototype.panelOptions = {
 };
 
 RangeSlider.prototype.layerOptions = {
+    open: false,
     precision: 2,
     delay: 3000,
     lock: false,
@@ -182,7 +79,7 @@ RangeSlider.prototype.layerOptions = {
     range: { min: null, max: null },
     limit: { min: null, max: null },
     layers: [],
-    nbLayers: 0
+    controls: []
 };
 
 RangeSlider.prototype.translations = {

@@ -6,11 +6,11 @@ export class SliderControls {
      * Slider controls constructor
      * @constructor
      * @param {Any} mapApi the viewer api
-     * @param {Any} panelManager the Panel Manager class
+     * @param {Any} panel the panel
      * @param {String[]} templates the controls template
      * @param {SliderBar} slider the slider bar
      */
-    constructor(mapApi: any, panelManager: any, templates: string[], slider: SliderBar) {
+    constructor(mapApi: any, panel: any, templates: string[], slider: SliderBar) {
         this.mapApi = mapApi;
 
         mapApi.agControllerRegister('LockSliderCtrl', function() {
@@ -71,7 +71,7 @@ export class SliderControls {
         });
 
         // loop trought array of controls to add then add them
-        const barControls = panelManager.body.find('.slider-controls');
+        const barControls = panel.body.find('.slider-controls');
         for (let template of templates) {
             if (template.includes('slider-delay-control')) {
                 // add delay control to play control div

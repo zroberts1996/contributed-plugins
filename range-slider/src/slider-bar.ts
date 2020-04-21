@@ -1,18 +1,22 @@
 import * as nouislider from 'nouislider';
 
-const domtoimage = require('dom-to-image');
-const gifshot = require('gifshot');
-const FileSaver = require('file-saver');
-
 import { Observable, BehaviorSubject } from 'rxjs';
 
 import { Range } from './index';
+
+const domtoimage = require('dom-to-image');
+const gifshot = require('gifshot');
+const FileSaver = require('file-saver');
 
 export class SliderBar {
     private _slider: any;
     private _mapApi: any;
     private _config: any;
     private _playInterval: any;
+    private _range: Range = { min: null, max: null };
+    private _limit: Range = { min: null, max: null };
+    private _step: number;
+    private _precision: number;
 
     // *** Static observable for the class ***
     // observable to detect play/pause modification
@@ -37,6 +41,7 @@ export class SliderBar {
         this._mapApi = mapApi;
         this._slider = document.getElementById('nouislider');
         this._config = config;
+        this._precision = config.precision;
 
         // set dynamic values used in accessor
         this._slider.delay = config.delay;
@@ -44,24 +49,35 @@ export class SliderBar {
         this._slider.loop = config.loop;
         this._slider.range = config.range;
         this._slider.export = config.export;
+    }
+
+    /**
+     * Start slider creation
+     * @function
+     * @param {String} type the type of slider (date, number or wmst)
+     * @param {String} language the viewerlanguage (en-CA or fr-CA)
+     */
+    startSlider(type: string, language: string): void {
+        // set step
+        this._step = (this.range.max - this.range.min);
 
         // initialize the slider
         // TODO: check what is best range vs step.........
-        const delta = Math.abs(config.limit.max - config.limit.min);
+        const delta = Math.abs(this.limit.max - this.limit.min);
         const mapWidth = this._mapApi.fgpMapObj.width;
         nouislider.create(this._slider,
             {
-                start: [this._slider.range.min, this._slider.range.max],
+                start: [this.range.min, this.range.max],
                 connect: true,
                 behaviour: 'drag-tap',
-                tooltips: [{ to: (value: number) => this.formatPips(value, this._config.type, this._config.language), from: Number },
-                            { to: (value: number) => this.formatPips(value, this._config.type, this._config.language), from: Number }],
-                range: this.setRanges(mapWidth, config.limit, delta),
+                tooltips: [{ to: (value: number) => this.formatPips(value, type, language), from: Number },
+                            { to: (value: number) => this.formatPips(value, type, language), from: Number }],
+                range: this.setRanges(mapWidth, this.limit, delta),
                 pips: {
                     mode: 'range',
                     density: (mapWidth > 800) ? 2 : 25,
                     format: {
-                        to: (value: number) => { return this.formatPips(value, this._config.type, this._config.language); },
+                        to: (value: number) => { return this.formatPips(value, type, language); },
                         from: Number
                     }
                 }
@@ -82,7 +98,7 @@ export class SliderBar {
             that.setDefinitionQuery(that._slider.range);
 
             // update step from new range values
-            if (!that._slider.lock) { that._config.step = that._slider.range.max - that._slider.range.min; }
+            if (!that._slider.lock) { that._step = that._slider.range.max - that._slider.range.min; }
         });
     }
 
@@ -132,34 +148,92 @@ export class SliderBar {
         return value;
     }
 
-    // property to get/set the slider lock
+    /**
+     * Set slider range
+     * @property range
+     */
+    set range(value: Range) {
+        this._range = value;
+    }
+    /**
+     * Get slider range
+     * @property range
+     */
+    get range(): Range {
+        return this._range;
+    }
+
+    /**
+     * Set slider limit
+     * @property limit
+     */
+    set limit(value: Range) {
+        this._limit = value;
+    }
+    /**
+     * Get slider limit
+     * @property limit
+     */
+    get limit(): Range {
+        return this._limit;
+    }
+
+    /**
+     * Set slider lock
+     * @property lock
+     */
     set lock(lock: boolean) {
         this._slider.lock = lock;
     }
-    get lock() {
+    /**
+     * Get slider lock
+     * @property lock
+     */
+    get lock(): boolean {
         return this._slider.lock
     }
 
-    // property to get/set the slider loop
+    /**
+     * Set slider loop
+     * @property loop
+     */
     set loop(loop: boolean) {
         this._slider.loop = loop;
     }
-    get loop() {
+    /**
+     * Get slider loop
+     * @property loop
+     */
+    get loop(): boolean {
         return this._slider.loop;
     }
 
-    // property to get/set the slider delay
+    /**
+     * Set slider delay
+     * @property delay
+     */
     set delay(delay: number) {
         this._slider.delay = delay;
     }
+    /**
+     * Get slider delay
+     * @property delay
+     */
     get delay(): number {
         return this._slider.delay;
     }
 
-    // property to get/set the slider export
+    /**
+     * Set slider export
+     * @property export
+     */
     set export(exp: boolean) {
         this._slider.export = exp;
     }
+    /**
+     * Get slider export
+     * @property export
+     */
     get export(): boolean {
         return this._slider.export;
     }
@@ -177,8 +251,8 @@ export class SliderBar {
             SliderBar.setPlayState(play);
 
              // start play
-            this.playInstant(this._config.limit.max);
-            this._playInterval = setInterval(() => this.playInstant(this._config.limit.max), this.delay);
+            this.playInstant(this.limit.max);
+            this._playInterval = setInterval(() => this.playInstant(this.limit.max), this.delay);
         } else { this.pause(); }
     }
 
@@ -196,8 +270,8 @@ export class SliderBar {
             this.step('up');
         } else if (this._slider.loop) {
             // slider is in loop mode, reset ranges and continue playing
-            this._slider.range.min = this._config.limit.min;
-            this._slider.range.max = this._slider.range.min + this._config.step;
+            this._slider.range.min = this.limit.min;
+            this._slider.range.max = this._slider.range.min + this._step;
             this._slider.noUiSlider.set([this._slider.range.min, this._slider.range.max]);
         } else { this.pause(); }
     }
@@ -286,8 +360,8 @@ export class SliderBar {
      * @function refresh
      */
     refresh(): void {
-        this._slider.noUiSlider.set([this._config.range.min, this._config.range.max]);
-        this.setDefinitionQuery(this._config.range);
+        this._slider.noUiSlider.set([this.range.min, this.range.max]);
+        this.setDefinitionQuery(this.range);
         this.pause();
     }
 
@@ -299,7 +373,7 @@ export class SliderBar {
     step(direction: string): void {
         // get handles values and set step
         const values = this._slider.noUiSlider.get().map(Number);
-        let step = (direction === 'up') ? this._config.step : -this._config.step;
+        let step = (direction === 'up') ? this._step : -this._step;
 
         // calculate range values then apply to slider
         const range: Range = { min: this.lock ? values[0] : this.setLeftAnchor(values, direction, step), max: this.setRightAnchor(values, direction, step) };
@@ -320,7 +394,7 @@ export class SliderBar {
      */
     setLeftAnchor(values: number, direction: string, step: number): number {
         let value: number = 0;
-        const limit: Range = this._config.limit;
+        const limit: Range = this.limit;
 
         if (direction === 'down') {
             // left anchor needs to be higher or equal to min limit (down = minus step)
@@ -338,7 +412,7 @@ export class SliderBar {
             }
         }
 
-        return parseFloat(value.toFixed(this._config.precision));
+        return parseFloat(value.toFixed(this._precision));
     }
 
     /**
@@ -351,7 +425,7 @@ export class SliderBar {
      */
     setRightAnchor(values: number, direction: string, step: number): number {
         let value: number = 0;
-        const limit: Range = this._config.limit;
+        const limit: Range = this.limit;
 
         if (direction === 'up') {
             // right anchor needs to be lower or equal to max limit
@@ -369,7 +443,7 @@ export class SliderBar {
             }
         }
 
-        return parseFloat(value.toFixed(this._config.precision));
+        return parseFloat(value.toFixed(this._precision));
     }
 
     /**
@@ -377,7 +451,7 @@ export class SliderBar {
      * @function setDefinitionQuery
      * @param {Range} range range to use to filter
      */
-    setDefinitionQuery(range: Range) {
+    setDefinitionQuery(range: Range): void {
         // Sample with cql_filter (Supported by GeoServer):
         // http://jsfiddle.net/ZkC5M/274/: http://gis.fba.org.uk/geoserver/RP_Workspace/wms?service=WMS&request=GetMap&version=1.1.1&layers=RP_Workspace:sites_view1&styles=&format=image/png&transparent=true&height=256&width=256&cql_filter=RMIGroup%20=%20%27Almond%20Catchment%20ARMI%27&srs=EPSG:3857&bbox=-1252344.2714243277,7514065.628545966,0,8766409.899970295
 

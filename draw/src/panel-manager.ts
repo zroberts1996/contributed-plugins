@@ -263,7 +263,7 @@ export class PanelManager {
 
         // activate the keyboard event if an active tool is selected
         // if needed we can look for rv-keyboard on mapDiv to know if crosshair is enable
-        if (enable) {
+        if (enable && $('.rv-keyboard').length === 1) {
             // set focus on the map and add the keydown event
             (<any>document).getElementsByClassName('rv-esri-map')[0].rvFocus();
             const jQwindow = $(window);
@@ -274,6 +274,10 @@ export class PanelManager {
                 this._mousemoveHandler = this.mapApi.esriMap.on('mouse-move', Debounce(function(event) { (<any>that).mouseHandler(event, (<any>that).drawToolbar) }, 50));
                 this._mouseclickHandler = this.mapApi.esriMap.on('click', function(event) { (<any>that).mouseHandler(event, (<any>that).drawToolbar) });
             }
+
+            this.drawToolbar.local = this.drawToolbar.localWCAG;
+        } else {
+            this.drawToolbar.local = this.drawToolbar.localMouse;
         }
 
         // activate the right tool from the ESRI draw toolbar
@@ -296,6 +300,9 @@ export class PanelManager {
         let { left: x, top: y } = $(targetElement).offset();
         x += -event.data.jQwindow.scrollLeft() + targetElmWidth / 2;
         y += -event.data.jQwindow.scrollTop() + targetElmHeight / 2;
+
+        // position keyboard tooltip
+        $('.esriMapTooltip').css({ top: `${y}px`, left: `${x}px`, display: 'block' });
 
         if (event.which === 13 && event.data.name === 'extent') { // enter extent starting point
             event.data.draw.setExtentPoints([x, y], false);

@@ -61,7 +61,124 @@ export class DrawToolbar {
     private _distanceParams: object;
     private _showMeasure: boolean = true;
 
+    private _localMouse: object = { point: {
+                                    'en-CA': {
+                                        addPoint: 'Click to add a point'
+                                    },
+                                    'fr-CA': {
+                                        addPoint: 'Cliquez pour ajouter un point'
+                                    }
+                                },
+                                polyline: {
+                                    'en-CA': {
+                                        complete: 'Double-click to end line',
+                                        resume: 'Click to end line segment',
+                                        start: 'Click to start line segment'
+                                    },
+                                    'fr-CA': {
+                                        complete: 'Double-cliquez pour terminer la ligne',
+                                        resume: 'Cliquez pour terminer le segment de ligne',
+                                        start: 'Cliquez pour commencer le segment de ligne'
+                                    }
+                                },
+                                polygon: {
+                                    'en-CA': {
+                                        complete: 'Double-click to close polygon',
+                                        resume: 'Click to end polygon segment',
+                                        start: 'Click to start polygon segment'
+                                    },
+                                    'fr-CA': {
+                                        complete: 'Double-cliquez pour fermer le polygone',
+                                        resume: 'Cliquez pour terminer le segment de polygone',
+                                        start: 'Cliquez pour commencer le segment de polygone'
+                                    }
+                                },
+                                extent:{
+                                    'en-CA': {
+                                        freehand: 'Press down to start and let go to finish'
+                                    },
+                                    'fr-CA': {
+                                        freehand: 'Appuyez pour commencer et laissez aller pour finir'
+                                    }
+                                }
+    };
+    private _localWCAG: object = { point: {
+                                    'en-CA': {
+                                        addPoint: 'Press Enter to add a point'
+                                    },
+                                    'fr-CA': {
+                                        addPoint: 'Appuyez sur Entrer pour ajouter un point'
+                                    }
+                                },
+                                polyline: {
+                                    'en-CA': {
+                                        complete: 'Press Space to end line',
+                                        resume: 'Press Enter to end line segment',
+                                        start: 'Press Enter to start line segment'
+                                    },
+                                    'fr-CA': {
+                                        complete: 'Appuyez sur Espace pour terminer la ligne',
+                                        resume: 'Appuyez sur Entrer pour terminer le segment de ligne',
+                                        start: 'Appuyez sur Entrer pour commencer le segment de ligne'
+                                    }
+                                },
+                                polygon: {
+                                    'en-CA': {
+                                        complete: 'Press Space to close polygon',
+                                        resume: 'Press Enter to end polygon segment',
+                                        start: 'Press Enter to start polygon segment'
+                                    },
+                                    'fr-CA': {
+                                        complete: 'Appuyez sur Espace pour fermer le polygone',
+                                        resume: 'Appuyez sur Entrer pour terminer le segment de polygone',
+                                        start: 'Appuyez sur Entrer pour commencer le segment de polygone'
+                                    }
+                                },
+                                extent:{
+                                    'en-CA': {
+                                        freehand: 'Press enter to add the first corner then press Space to finish'
+                                    },
+                                    'fr-CA': {
+                                        freehand: 'Appuyez sur Entrer pour le premier coin et Appuyez sur Espace pour finir'
+                                    }
+                                }
+    };
     private _local: object;
+
+    /**
+     * get local WCAG tooltip
+     * @property localWCAG
+     * @returns {Object} the WCAG tooltip to use
+     */
+    get localWCAG(): object {
+        return this._localWCAG;
+    }
+
+    /**
+     * get local mouse tooltip
+     * @property localMouse
+     * @returns {Object} the mouse tooltip to use
+     */
+    get localMouse(): object {
+        return this._localMouse;
+    }
+
+    /**
+     * set local tooltip for draw toolbar
+     * @property local
+     * @param {Object} value the tooltip to use
+     */
+    set local(value: object) {
+        this._local = value;
+    }
+    /**
+     * get local WCAG tooltip
+     * @property local
+     * @returns {Object} the WCAG tooltip to use
+     */
+    get local(): object {
+        return this._local;
+    }
 
     /**
      * Toolbar constructor
@@ -103,51 +220,7 @@ export class DrawToolbar {
             this.initToolbar(myBundle);
 
             // set tooltip for esri Draw toolbar
-            var point = {
-                'en-CA': {
-                    addPoint: 'Click to add a point'
-                },
-                'fr-CA': {
-                    addPoint: 'Cliquez pour ajouter un point'
-                }
-            };
-
-            var polyline = {
-                'en-CA': {
-                    complete: 'Double-click to end line',
-                    resume: 'Click to end line segment',
-                    start: 'Click to start line segment'
-                },
-                'fr-CA': {
-                    complete: 'Double-cliquez pour terminer la ligne',
-                    resume: 'Cliquez pour terminer le segment de ligne',
-                    start: 'Cliquez pour commencer le segment de ligne'
-                }
-            };
-
-            var polygon = {
-                'en-CA': {
-                    complete: 'Double-click to close polygon',
-                    resume: 'Click to end polygon segment',
-                    start: 'Click to start polygon segment'
-                },
-                'fr-CA': {
-                    complete: 'Double-cliquez pour fermer le polygone',
-                    resume: 'Cliquez pour terminer le segment de polygone',
-                    start: 'Cliquez pour commencer le segment de polygone'
-                }
-            };
-
-            var extent = {
-                'en-CA': {
-                    freehand: 'Press down to start and let go to finish'
-                },
-                'fr-CA': {
-                    freehand: 'Appuyez pour commencer et laissez aller pour finir'
-                }
-            };
-
-            this._local = { point, polyline, polygon, extent };
+            this.local = this._localMouse;
         });
 
         // create graphics layer
@@ -217,7 +290,7 @@ export class DrawToolbar {
         if (['point', 'polyline', 'polygon', 'extent'].indexOf(value) > -1) {
             if (typeof this._editHandler !== 'undefined') { this._editHandler.remove(); };
 
-            this._bundle.i18n.toolbars.draw = this._local[value][this._config.language];
+            this._bundle.i18n.toolbars.draw = this.local[value][this._config.language];
             this._drawToolbar.activate(this._bundle.drawToolbar[value.toUpperCase()]);
             this._editToolbar.deactivate();
         } else if (value === 'edit') {

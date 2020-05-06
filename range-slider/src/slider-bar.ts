@@ -245,13 +245,12 @@ export class SliderBar {
      */
     play(play: boolean): void {
         if (play) {
-            this._gifImages = [];
-
             // set play state to observable to change the icon
             SliderBar.setPlayState(play);
 
-             // start play
-            this.playInstant(this.limit.max);
+            // start play (it will wait the delay before doing is first step) and take snapshop if need be
+            this._gifImages = [];
+            this.setTakeSnapShot();
             this._playInterval = setInterval(() => this.playInstant(this.limit.max), this.delay);
         } else { this.pause(); }
     }
@@ -262,9 +261,8 @@ export class SliderBar {
      * @param {Number} limitmax the max limit
      */
     playInstant(limitmax: number): void {
-        // if export gif is selected, take a snapshot and use timeout to take it just before the next move
-        // so definition query has finished
-        if (this.export) setTimeout(() => { this.takeSnapShot(false); }, this.delay - 500);
+        // take snapshop if need be
+        this.setTakeSnapShot();
 
         if (this._slider.range.max !== limitmax) {
             this.step('up');
@@ -277,6 +275,16 @@ export class SliderBar {
     }
 
     /**
+     * Check if we need to take snapshot to export GIF
+     * @function setTakeSnapShot
+     */
+    setTakeSnapShot() {
+        // if export gif is selected, take a snapshot and use timeout to take it just before the next move
+        // so definition query has finished
+        if (this.export) setTimeout(() => { this.takeSnapShot(false); }, this.delay - 100);
+    }
+
+    /**
      * Take a snapshot of the map for the export gif function
      * @function takeSnapShot
      * @param {Boolean} stop true if it is the last snapshot and it needs to export the gif, false otherwise
@@ -284,32 +292,47 @@ export class SliderBar {
     takeSnapShot(stop: boolean): void {
         // get map node + width and height
         const node: any = document.getElementsByClassName('rv-esri-map')[0];
-        const width = node.offsetWidth;
-        const height = node.offsetHeight;
 
-        domtoimage.toPng(node, { bgcolor: 'white' }).then(dataUrl => {
+        domtoimage.toSvg(node, { bgcolor: 'white', quality: 0.5 }).then(dataUrl => {
             this._gifImages.push(dataUrl);
-
-            if (stop) {
-                this.export = false;
-
-                gifshot.createGIF({
-                    'images': this._gifImages,
-                    'interval': this.delay,
-                    'gifWidth': width,
-                    'gifHeight': height
-                }, obj => {
-                    if (!obj.error) {
-                        FileSaver.saveAs(this.dataURItoBlob(obj.image), 'fgpv-slider-export.gif' );
-                    }
-                });
-            }
         }).catch(error => {
             console.error('Not able to save screen shot!', error);
         });
     }
 
-     /**
+    exportToGIF() {
+        // get map node + width and height set a maximum size to reduce file size... keep proportion
+        const node: any = document.getElementsByClassName('rv-esri-map')[0];
+        const proportion = node.offsetHeight / node.offsetWidth;
+        const width = (node.offsetWidth <= 1500) ? node.offsetWidth : 1500;
+        const height = width * proportion;
+
+        try {
+            // biggest problem is they are using 10 frames by second. Even if our frame are not moving, to have a frame duration
+            // of 3 seconds will require 30 frames of the same image. Interval and numFrames parameters doesn't change anything
+            // sampleInterval will reduce the size a little bit but we loose color symbology
+            // use timeout to let the ui refresh itself before creating the GIF
+            setTimeout(() => {
+                gifshot.createGIF({
+                    'images': this._gifImages,
+                    'frameDuration': 10, // amount of time (10 = 1s) to stay on each frame
+                    'numFrames': 1,
+                    'gifWidth': width,
+                    'gifHeight': height
+                }, obj => {
+                    this._gifImages = [];
+
+                    if (!obj.error) {
+                        FileSaver.saveAs(this.dataURItoBlob(obj.image), 'fgpv-slider-export.gif' );
+                    }
+                });
+            }, 500);
+        } catch(error) {
+            console.error('Not able to convert screen shot to GIF!', error);
+        }
+    }
+
+    /**
      * Set play on the slider
      * @function dataURItoBlob
      * @param {String} dataURI true if slider is playing, false otherwise

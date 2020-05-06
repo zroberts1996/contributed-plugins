@@ -3,6 +3,8 @@ This plugin let you add a range slider to your map. The slider works with ESRI f
 
 [Demo page](https://jolevesq.github.io/contributed-plugins/range-slider/samples/range-slider-index.html)
 
+Note: The export to GIF function is not supported on Internet Explorer as it does not support SVG <foreignObject> tag and Safari, as it uses a stricter security model on <foreignObject> tag (domtoimage library).
+
 ## How to use the plugin
 Inside your configuration file you need
 ```

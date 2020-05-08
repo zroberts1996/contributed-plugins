@@ -265,12 +265,12 @@
         "controls": ["lock", "loop", "delay", "refresh", "export"],
         "params": {
           "delay": 3000,
-          "range": { "min": -135, "max": -125 },
-          "limit": { "min": -135, "max": -90 },
+          "range": { "min": -120, "max": -115 },
+          "limit": { "min": -120, "max": -90 },
           "type": "number"
         },
         "layers": [{
-            "id": "powerplant100mw-naturalGas",
+            "id": "0",
             "field": "LONGITUDE"
         }]
       }

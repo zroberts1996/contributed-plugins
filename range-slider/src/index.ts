@@ -98,7 +98,7 @@ RangeSlider.prototype.translations = {
             refresh: 'Refresh',
             gif: 'GIF',
             tooltip: {
-                gif: 'If enabled, click \"Play\" to start then \"Pause\" to export GIF'
+                gif: 'If enabled, click \"Play\" to start then \"Pause\" to finish then disable the control to export GIF'
             }
         }
     },
@@ -118,7 +118,7 @@ RangeSlider.prototype.translations = {
             refresh: 'Rafraîchir',
             gif: 'GIF',
             tooltip: {
-                gif: 'Si activé, cliquez sur \"Jouer\" pour démarrer, puis sur \"Pause\" pour exporter le GIF'
+                gif: 'Si activé, cliquez sur \"Jouer\" pour démarrer, puis sur \"Pause\" pour terminer et désactiver le contrôle pour exporter le GIF'
             }
         }
     }

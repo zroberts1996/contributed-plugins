@@ -1,5 +1,7 @@
 import { SliderBar } from './slider-bar';
 
+const { detect } = require('detect-browser');
+
 export class SliderControls {
 
     /**
@@ -67,11 +69,16 @@ export class SliderControls {
         mapApi.agControllerRegister('ExportSliderCtrl', function() {
             // toggle export gif switch
             this.export = slider.export;
-            this.selectExport = () => { slider.export = this.export; }
+            this.selectExport = () => {
+                slider.export = this.export;
+
+                if (!this.export) { slider.exportToGIF(); }
+            }
         });
 
         // loop trought array of controls to add then add them
         const barControls = panel.body.find('.slider-controls');
+
         for (let template of templates) {
             if (template.includes('slider-delay-control')) {
                 // add delay control to play control div
@@ -79,6 +86,12 @@ export class SliderControls {
             } else if (template.includes('slider-loop-control')) {
                 // add loop control to play control div
                 barControls.find('.slider-play-control').prepend(this.compileTemplate(template));
+            } else if (template.includes('slider-export-control')) {
+                // detect browser because Safari and IE does not support export GIF
+                const browser = detect();
+                if (browser.name === 'chrome' || browser.name === 'firefox') {
+                    barControls.append(this.compileTemplate(template));
+                }
             } else {
                 barControls.append(this.compileTemplate(template));
             }

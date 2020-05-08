@@ -83,7 +83,7 @@ export const DELAY_BAR_TEMPLATE = `
             aria-label="{{ 'plugins.rangeSlider.bar.delay' | translate }}"
             ng-model="ctrl.selectedDelay"
             ng-change="ctrl.selectDelay()">
-            <md-option ng-repeat="(key, value) in { 3000: '3 sec', 4000: '4 sec', 5000: '5 sec', 6000: '6 sec', 7000: '7 sec' }" ng-value="{{ key }}">
+            <md-option ng-repeat="(key, value) in { 1000: '1 sec', 2000: '2 sec', 3000: '3 sec', 4000: '4 sec', 5000: '5 sec', 6000: '6 sec', 7000: '7 sec' }" ng-value="{{ key }}">
                 {{ value }}
             </md-option>
         </md-select>

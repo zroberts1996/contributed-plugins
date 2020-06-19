@@ -94,7 +94,7 @@
           "id": "0",
           "name": "Power Plant 100MW or more (hydro)",
           "layerType": "esriFeature",
-          "url": "http://proxyinternet.nrcan.gc.ca/arcgis/rest/services/MB-NC/NRCan_SGB_Business_LCC/MapServer/69"
+          "url": "https://geoappext.nrcan.gc.ca/arcgis/rest/services/NACEI/energy_infrastructure_of_north_america_en/MapServer/20"
         },
         {
           "id": "1",
@@ -255,7 +255,7 @@
       ]
     },
     "plugins": {
-      "defQueryGood": {
+      "defQueryGood ": {
         "description": "This is my first plugin description"
       }
     }
